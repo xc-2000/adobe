@@ -32,3 +32,4 @@ firefly-gen 是一个**生图 / 生视频多用户中转平台**：用户在统�
 | [08-roadmap](./08-roadmap.md) | 里程碑与阶段 |
 | [09-implementation-plan](./09-implementation-plan.md) | harvester → ARP 池 → 提交的开发与验收方案 |
 | [10-container-deployment](./10-container-deployment.md) | Compose/生产容器拓扑、隔离、伸缩与回滚 |
+| [11-execution-plan](./11-execution-plan.md) | 最优开发顺序、Sprint、验收闸门与首次提交拆分 |

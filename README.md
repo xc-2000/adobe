@@ -45,9 +45,12 @@ firefly-gen/
 参见 [`docs/07-dev-setup.md`](./docs/07-dev-setup.md)。最小路径：
 
 ```bash
+docker compose up -d --build   # API :18000 + PostgreSQL + Redis + MinIO
+
+# 或直接运行后端
 cp .env.example .env      # 填 DATABASE_URL / REDIS_URL / ARP_INTERNAL_TOKEN
 # 后端
-cd backend && pip install -r requirements.txt && uvicorn app.main:app --reload
+cd backend && pip install -e ".[dev]" && uvicorn app.main:app --reload
 # 前端
 cd frontend && pnpm install && pnpm dev
 # 采集器（独立机器/住宅出口）

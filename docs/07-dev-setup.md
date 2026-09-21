@@ -18,15 +18,17 @@ TEST_COOKIE_FILE=C:\Users\Administrator\Desktop\cookies_export (2) (1).txt
 
 ## 后端
 ```bash
+docker compose up -d --build  # API: http://127.0.0.1:18000
+
+# 或不使用容器直接运行
 cd backend
 python -m venv .venv && . .venv/Scripts/activate   # Windows PowerShell: .venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-alembic upgrade head          # 建表/迁移
+pip install -e ".[dev]"
 uvicorn app.main:app --reload --port 8000
 # worker（另开终端）
 celery -A app.workers.celery_app worker -l info -c 32
 ```
-建议依赖：`fastapi uvicorn[standard] sqlalchemy[asyncio] asyncpg alembic pydantic-settings redis celery curl_cffi httpx passlib[argon2] python-jose cryptography orjson`。
+当前依赖声明在 `backend/pyproject.toml`；Alembic/Celery/curl_cffi 将在对应 Sprint 接入后加入。
 
 ## 前端
 ```bash

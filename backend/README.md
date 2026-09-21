@@ -1,4 +1,20 @@
 # backend
 
-FastAPI 后端。目录规划见 [`../docs/01-architecture.md`](../docs/01-architecture.md)（`core/ models/ schemas/ api/ admin_api/ services/ arp/ adobe/ workers/`）。
-编码规范见 [`../.cursor/rules/10-backend-fastapi.mdc`](../.cursor/rules/10-backend-fastapi.mdc)。开发起步见 [`../docs/07-dev-setup.md`](../docs/07-dev-setup.md)。
+FastAPI 后端。当前 Sprint 0 已提供：
+
+- `app.main:create_app` 应用工厂。
+- `/health/live` 与检查 PostgreSQL/Redis 的 `/health/ready`。
+- 环境变量配置、统一领域错误、日志敏感信息脱敏。
+- 安全 Cookie 文件加载器 `app.accounts.cookie_loader`。
+- pytest、ruff、mypy 严格检查基线。
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python -m pip install -e ".[dev]"
+.\.venv\Scripts\python -m pytest
+.\.venv\Scripts\python -m ruff check app tests
+.\.venv\Scripts\python -m mypy app
+```
+
+目录规划见 [`../docs/01-architecture.md`](../docs/01-architecture.md)，编码规范见
+[`../.cursor/rules/10-backend-fastapi.mdc`](../.cursor/rules/10-backend-fastapi.mdc)。
