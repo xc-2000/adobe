@@ -29,7 +29,9 @@ alwaysApply: false
 - `ARP_INTERVAL` 必须 < 真实 TTL（~2-4min），75s 安全；铸完抓 UA+高熵 CH 一起入池。
 
 ## 提交（curl_cffi，纯 HTTP，不开浏览器）
-- `impersonate` 桌面 Chrome；`proxies=bundle.proxy_url`（原样）；header 用 bundle 的 UA/sec-ch-ua*（不用 impersonate 自带 CH）。
+- 浏览器身份统一为 **Chrome 148**。开源 `curl_cffi` 当前没有 `chrome148` 内置标签：TLS 使用最新可用 profile（当前 `chrome146`），header 必须用 bundle 的真实 148 UA/sec-ch-ua* 覆盖；若 CloakBrowser PRO 可导出 148 JA3/Akamai，则改用自定义 TLS 参数。
+- 禁止配置不存在的 `impersonate="chrome148"`；启动时校验 profile 可用并记录 profile 名（不记录敏感 bundle）。
+- `proxies=bundle.proxy_url`（原样），提交出口必须与铸票出口一致。
 - header 顺序固定（对齐 `docs/02-arp-core.md`）；`x-nonce=sha256(user_id + "-" + prompt[:256])`。
 - 状态码：`200`→轮询 href；`408`/"system under load"→**立即 invalidate 该 ARP** + 换票/换号重试（不死磕同一条）；`401`→刷账号 token(ARP 保留)；`403`→查 iOS 混用/UA 不一致；`451`→内容拒绝(不罚号不 failover)。
 - 轮询走同一 sticky；**预签名 CDN 下载直连**（住宅代理拉大图易超时）。

@@ -1,6 +1,6 @@
 # firefly-gen · 生图 / 生视频 多用户中转平台
 
-企业级 SaaS 后台风格（左右布局、蓝色科技感）的 AIGC 中转平台。用户在统一面板登录、在创作中心提交生图 / 生视频请求，平台通过一套自建的 **ARP 池 + 指纹自洽提交** 链路调度上游 Adobe Firefly（gpt-image / veo / luma / sora / seedance / firefly-image-5 / firefly-video 等模型），并做多用户计费、Key 管理与高并发调度。
+企业级 SaaS 后台风格（左右布局、蓝色科技感）的 AIGC 中转平台。用户在统一面板登录、在创作中心提交生图 / 图片编辑 / 生视频请求，平台通过一套自建的 **ARP 池 + 指纹自洽提交** 链路调度上游 Adobe Firefly（gpt-image / veo / luma / sora / seedance / firefly-image-5 / firefly-video 等模型），并做多用户计费、Key 管理与高并发调度。对外提供 OpenAI 与 Gemini 官方格式的同步/异步接口。
 
 > 面向开发者的完整设计规则与文档见 [`docs/`](./docs)，AI 协作规则见 [`.cursor/rules/`](./.cursor/rules)。
 

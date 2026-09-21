@@ -25,8 +25,10 @@ firefly-gen 是一个**生图 / 生视频多用户中转平台**：用户在统�
 | [01-architecture](./01-architecture.md) | 系统架构、进程拆分、数据流 |
 | [02-arp-core](./02-arp-core.md) | ARP 六条件、铸票、提交协议（技术核心） |
 | [03-data-model](./03-data-model.md) | 数据库表设计 |
-| [04-api-spec](./04-api-spec.md) | 面板 / 对外 / 内网 API |
+| [04-api-spec](./04-api-spec.md) | 面板 / OpenAI / Gemini / 内网 API（同步、异步、编辑） |
 | [05-frontend-ui](./05-frontend-ui.md) | 企业级 SaaS 后台 UI 规范与页面 |
 | [06-concurrency-optimization](./06-concurrency-optimization.md) | 高并发与优化 |
 | [07-dev-setup](./07-dev-setup.md) | 本地开发与部署 |
 | [08-roadmap](./08-roadmap.md) | 里程碑与阶段 |
+| [09-implementation-plan](./09-implementation-plan.md) | harvester → ARP 池 → 提交的开发与验收方案 |
+| [10-container-deployment](./10-container-deployment.md) | Compose/生产容器拓扑、隔离、伸缩与回滚 |

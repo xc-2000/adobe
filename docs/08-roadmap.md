@@ -8,14 +8,16 @@
 ## 阶段 1 · 出图链路打通（最高优先）
 - [ ] `harvester`：148 指纹 + 住宅 sticky 铸 `sid/ark/bfp/ftr`，抓 UA/CH，POST 入池。
 - [ ] `arp` 池（Redis）：入池 / checkout(最新鲜) / invalidate / health。
-- [ ] `adobe`：curl_cffi 提交(绑出口+身份) + 轮询 + CDN 直连下载；cookie→clio token 交换。
+- [ ] 安全读取本机测试 Cookie（4 行）→ clio token；Cookie/token 加密且全链路日志脱敏。
+- [ ] `adobe`：curl_cffi（最新可用 TLS profile + Chrome 148 UA/CH）提交、轮询、CDN 直连下载；绑出口与身份。
 - [ ] `payloads`：gpt-image / veo / luma / sora / seedance / image5 / firefly-video 请求体。
 - [ ] 验收：付费 HARD 号 → 200 出图；换 SID → 408；内容拒绝 451 不罚号。
 
 ## 阶段 2 · 后端平台
 - [ ] 数据模型 + Alembic 迁移（users/keys/jobs/records/ledger/accounts/logs/config）。
 - [ ] 面板鉴权(JWT) + 用户/管理员 API；生成入队(Celery) + 幂等 + 计费(原子扣减+ledger)。
-- [ ] 对外 `/v1` 兼容接口 + KEY 鉴权 + 限流；request_log 脱敏审计。
+- [ ] OpenAI + Gemini 官方格式；同步/异步、Operation/Task、图片编辑接口；KEY 鉴权 + 限流。
+- [ ] 容器化：API/三类 worker/PostgreSQL/Redis/MinIO/前端；harvester 支持宿主机优先或独立容器。
 
 ## 阶段 3 · 前端 SaaS 后台
 - [ ] ProLayout 左右布局 + 蓝色主题；角色分区路由与菜单。

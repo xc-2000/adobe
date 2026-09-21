@@ -84,7 +84,10 @@
 > 注：Express 侧 `projectx_webapp` token 覆盖 image/veo/luma/sora，但对 seedance 等 Firefly-native 模型 403，需再铸 clio token（`creative_production`）。
 
 ## 6. 提交（curl_cffi，纯 HTTP，不开浏览器）
-- 会话：`impersonate` 桌面 Chrome（如 `chrome131`）；`proxies=bundle.proxy_url`（原样）；header 覆盖为 bundle 的 UA/sec-ch-ua*（**不用** impersonate 自带 CH）。
+- **统一身份目标为 Chrome 148**。CloakBrowser/fingerprint-chromium 铸票、UA、Client-Hints 都使用 148。
+- 开源 `curl_cffi` 当前没有 `chrome148` 内置 profile（目前最新为 `chrome146`，版本缺口是正常的，只有指纹变化时才新增标签）。默认以 `impersonate="chrome146"` 提供最接近的 TLS/HTTP2 指纹，再用 bundle 覆盖真实 Chrome 148 的 UA/sec-ch-ua*；**禁止**传不存在的 `chrome148` 标签。
+- 若 CloakBrowser PRO 能导出准确的 Chrome 148 JA3/Akamai 参数，通过 `SUBMIT_JA3` / `SUBMIT_AKAMAI` 启用自定义 TLS，做到 TLS + headers 都为 148；启用前必须用指纹检测端点做一致性验收。
+- `proxies=bundle.proxy_url`（原样）；header 覆盖为 bundle 的 UA/sec-ch-ua*（**不用** impersonate 自带 CH）。
 - 端点：
   - 图：`/v2/3p-images/generate-async`（Image5 用 `image-v5.ff.adobe.io/v1/images/generate-async`，schema 不同）
   - 视频：`/v2/3p-videos/generate-async`（firefly-video 用 `video-v1.ff.adobe.io/v2/videos/generate`）

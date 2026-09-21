@@ -7,8 +7,14 @@
 ## 环境变量
 ```bash
 cp .env.example .env
-# 必填：APP_SECRET_KEY, DATABASE_URL, REDIS_URL, ARP_INTERNAL_TOKEN
+# 必填：APP_SECRET_KEY, FIELD_ENCRYPTION_KEY, DATABASE_URL, REDIS_URL, ARP_INTERNAL_TOKEN
 ```
+
+本机真实链路测试可设置：
+```text
+TEST_COOKIE_FILE=C:\Users\Administrator\Desktop\cookies_export (2) (1).txt
+```
+该文件仅运行时读取，不复制进仓库/镜像，不输出内容；测试账号入库前必须加密。
 
 ## 后端
 ```bash
@@ -51,3 +57,4 @@ python harvester.py
 - 面板 + DB + Redis 在主机（HTTPS 反代，`admin-api` 仅内网 + IP 白名单）。
 - worker 多实例，出口绑住宅代理；采集器部署在住宅出口机器，按出口分布多实例合并入同一池。
 - 进程守护用 systemd / pm2 / supervisor；日志集中收集并脱敏。
+- 容器化拓扑、harvester 容器限制、Secret/网络/回滚见 [`10-container-deployment.md`](./10-container-deployment.md)。

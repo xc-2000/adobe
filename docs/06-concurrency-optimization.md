@@ -4,9 +4,10 @@
 
 ## 1. 分层限流（从外到内）
 1. **入口**：Nginx/反代 连接数 + 面板/`/v1` 按用户与 KEY 令牌桶（Redis）。
-2. **队列**：生成请求全部异步入 Celery/Redis，前端拿 `job_id` 轮询/WS。削峰，保护上游。
+2. **队列**：生成请求全部先持久化并入队；同步接口只是等待同一任务的 Redis 终态事件，不在 API 进程执行生成。
 3. **worker 并发**：`GEN_WORKER_CONCURRENCY` 与账号池容量取小；worker 内单账号并发=1（提交串行、轮询可并行）。
 4. **上游**：单账号限速用 `parked_until` 退避；429 只影响该号。
+- `image`、`video`、`media` 分队列与 worker，防止分钟级视频任务阻塞图片；队列设最大深度，超限返回 429/503 + `Retry-After`。
 
 ## 2. 资源池化与调度
 - **账号池**：Redis 租约锁 `SET account:{id}:lease NX PX <ttl>`；只挑 `status=active & plan=HARD`；408 → `parked`+冷却，跨号重试骑好窗口；401 刷 token；连续失败标 `dead`。
@@ -22,6 +23,8 @@
 - 全 async（FastAPI/asyncpg/redis.asyncio）；curl_cffi 同步提交放线程池 / Celery，绝不阻塞事件循环。
 - PG 连接池匹配 worker 数；curl_cffi session 每请求新建（绑该次 proxy/fp）用完释放；下载与轮询走本机 IP，只提交走代理。
 - 大文件（视频结果）流式落对象存储，避免全量进内存。
+- 同步等待用 Redis Pub/Sub/Stream + 最多 180s timeout，不做高频数据库轮询；客户端断开不取消已入队任务。
+- curl_cffi 的提交 session 不跨不同 ARP/代理复用；轮询/下载可用独立连接池，避免连接状态串污染。
 
 ## 5. 缓存
 - 热点只读：系统配置、`key_hash→user_id`、模型定价、账号池/ARP 池快照 → Redis + 短 TTL + 主动失效。
@@ -40,3 +43,4 @@
 ## 8. 成本与容量估算要点
 - 采集器：1-2 浏览器常驻 ~0.5-1GB；铸票 75s/张，池维持 3-10 条。
 - 出图并发上限 ≈ min(未过期 ARP 数, 可用 HARD 账号数, worker 并发)。要更高并发 → 加出口/账号/采集器，而不是让出图进程自己铸票。
+- 压测必须拆开测：入口吞吐、同步长连接、队列吞吐、上游有效并发、对象下载带宽；不能用单一 QPS 代表系统容量。
