@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from app.admin_api.arp import router as arp_admin_router
 from app.api.health import router as health_router
 from app.core.config import Settings, get_settings
 from app.core.errors import install_error_handlers
@@ -30,6 +31,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     install_error_handlers(app)
     app.include_router(health_router)
+    app.include_router(arp_admin_router)
     return app
 
 

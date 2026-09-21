@@ -56,6 +56,7 @@ services:
     environment:
       APP_ENV: dev
       APP_SECRET_KEY: ${APP_SECRET_KEY:-dev-only-change-me}
+      ARP_INTERNAL_TOKEN: ${ARP_INTERNAL_TOKEN:-dev-only-internal-token}
       DATABASE_URL: postgresql+asyncpg://firefly:${POSTGRES_PASSWORD:-firefly-dev}@postgres:5432/firefly_gen
       REDIS_URL: redis://redis:6379/0
       LOG_LEVEL: INFO

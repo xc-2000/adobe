@@ -4,10 +4,13 @@
 
 ## 阶段 0 · 骨架（本阶段产物：规则 + 文档 + 目录）
 - [x] 开发规则 `.cursor/rules/`、设计文档 `docs/`、`.env.example`、目录骨架。
+- [x] FastAPI 配置/日志/错误/健康检查、pytest/ruff/mypy 基线。
+- [x] PostgreSQL + Redis + MinIO + API 开发 Compose。
+- [x] 测试 Cookie 安全加载与脱敏验证（4 条，均含 `ims_sid`）。
 
 ## 阶段 1 · 出图链路打通（最高优先）
 - [ ] `harvester`：148 指纹 + 住宅 sticky 铸 `sid/ark/bfp/ftr`，抓 UA/CH，POST 入池。
-- [ ] `arp` 池（Redis）：入池 / checkout(最新鲜) / invalidate / health。
+- [x] `arp` 池（Redis）：四项/Chrome 148 校验，原子 publish / checkout / invalidate / health，内网鉴权。
 - [ ] 安全读取本机测试 Cookie（4 行）→ clio token；Cookie/token 加密且全链路日志脱敏。
 - [ ] `adobe`：curl_cffi（最新可用 TLS profile + Chrome 148 UA/CH）提交、轮询、CDN 直连下载；绑出口与身份。
 - [ ] `payloads`：gpt-image / veo / luma / sora / seedance / image5 / firefly-video 请求体。

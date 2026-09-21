@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     db_pool_size: int = Field(default=20, ge=1)
     db_max_overflow: int = Field(default=10, ge=0)
     redis_url: str = "redis://127.0.0.1:6379/0"
+    arp_internal_token: str = "dev-only-internal-token"
+    arp_ttl_seconds: int = Field(default=120, ge=30, le=240)
+    arp_max_uses: int = Field(default=20, ge=1, le=100)
+    arp_key_prefix: str = "firefly:arp"
 
     test_cookie_file: str | None = None
     log_level: str = "INFO"
