@@ -1,0 +1,38 @@
+---
+description: ARP 铸票与出图提交链路的硬性不变量（六条件、bundle、curl_cffi 提交）
+globs: backend/app/adobe/**,backend/app/arp/**,harvester/**
+alwaysApply: false
+---
+
+# ARP 核心链路不变量
+
+上游 `generate-async` 对不合格请求统一回 **408 "system under load"**（伪装的软拒，不是真超时）。
+出图/出视频 200 需要**六条件同时成立**，缺一即 408/403。完整原理见 `docs/02-arp-core.md`。
+
+## 六条件（提交前必须全部满足）
+1. 请求带有效 `x-arp-session-id`（`base64(json({sid,ark,bfp,ftr}))`，四件套缺一不可）。
+2. ARP 由**住宅 IP** 铸出（机房 IP 铸的票信任被打穿，恒 408）。
+3. 提交出口 == 铸票出口（同一 sticky session，一个字符都不能改 `proxy_url`）。
+4. 提交 UA / Client-Hints == 铸票那台浏览器（不一致 → 403/408）。
+5. `x-api-key` 与账号 token 的 JWT `client_id` 都是 `clio-playground-web`（勿混 FF-iOS）。
+6. 账号是付费 `planCap=HARD`（FREE 号即使票对也恒 408）。
+- 2.5 系列(gpt-image / flare / prism)额外：alpha 号铸的 `creative_production` clio token + body 带 `caiClaimVersion`。
+
+## ARP bundle（不可拆）
+`{id, token, proxy_url, egress_id, ua, ch, headers, minted_at, expires_at, uses, max_uses}` 整套存取。
+- `ftr` 必须是**完整 forter cookie**（`<id>_<ts>__UDF43-…=-<n>-v2_tt`），不是 `localStorage.forterToken` 裸 id（读错必 408）。
+- 禁止只存 token 字符串；禁止随机生成 sid/ark/bfp/ftr；禁止铸票走代理 A、提交走代理 B。
+
+## 采集器（harvester）
+- 用 CloakBrowser PRO / fingerprint-chromium **148** 指纹，每周期换 `--fingerprint={seed}`，住宅 sticky 出口。
+- `SherlockSdk.initAsync({clientId:"clio-playground-web"})` 铸票，校验能解出 sid+ark+bfp+ftr 才入池。
+- `ARP_INTERVAL` 必须 < 真实 TTL（~2-4min），75s 安全；铸完抓 UA+高熵 CH 一起入池。
+
+## 提交（curl_cffi，纯 HTTP，不开浏览器）
+- `impersonate` 桌面 Chrome；`proxies=bundle.proxy_url`（原样）；header 用 bundle 的 UA/sec-ch-ua*（不用 impersonate 自带 CH）。
+- header 顺序固定（对齐 `docs/02-arp-core.md`）；`x-nonce=sha256(user_id + "-" + prompt[:256])`。
+- 状态码：`200`→轮询 href；`408`/"system under load"→**立即 invalidate 该 ARP** + 换票/换号重试（不死磕同一条）；`401`→刷账号 token(ARP 保留)；`403`→查 iOS 混用/UA 不一致；`451`→内容拒绝(不罚号不 failover)。
+- 轮询走同一 sticky；**预签名 CDN 下载直连**（住宅代理拉大图易超时）。
+
+## 池水位
+未过期票 ≥ 在飞出图路数；`ready<ARP_MIN_READY` 时出图排队/降速，**不要**让出图进程自己去开浏览器铸票。

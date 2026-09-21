@@ -1,0 +1,43 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+*.log
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ---- Node / frontend ----
+node_modules/
+frontend/dist/
+frontend/.vite/
+*.local
+
+# ---- Data / secrets (NEVER commit) ----
+data.db
+*.sqlite
+*.sqlite3
+storage/
+uploads/
+outputs/
+proxies.txt
+accounts.txt
+cookies/
+*.cookie
+secrets/
+
+# ---- Browser / harvester runtime ----
+harvester/profiles/
+vendor/fingerprint-chromium/
+*.har
+
+# ---- OS / IDE ----
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

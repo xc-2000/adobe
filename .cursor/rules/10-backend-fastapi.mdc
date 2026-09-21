@@ -1,0 +1,32 @@
+---
+description: FastAPI 后端编码规范（分层、async、错误处理、鉴权、计费）
+globs: backend/**/*.py
+alwaysApply: false
+---
+
+# 后端 FastAPI 规范
+
+## 分层
+- `api/` 路由：只做入参校验(Pydantic schema)、鉴权、调用 service、组织响应。**禁止**在路由里写业务/SQL。
+- `services/` 业务逻辑，接收/返回领域对象，不认识 `Request`/`Response`。
+- `models/` SQLAlchemy 2.0 ORM（`Mapped[...]` 声明式）。`schemas/` Pydantic v2 DTO，二者分离。
+- `adobe/` 提交链路、`arp/` 池、`core/`(config/db/redis/security)。
+
+## async
+- 全链路 async：`AsyncSession`、`redis.asyncio`、`httpx.AsyncClient`。
+- curl_cffi 是同步库：提交/上传/下载放 `run_in_executor` 或 Celery worker，**不要**在事件循环里直接调。
+- DB 会话用依赖注入 `Depends(get_session)`，请求结束提交/回滚；跨请求任务自建会话并显式关闭。
+
+## 错误处理
+- 领域异常继承 `AppError(code, http_status, message)`，全局 handler 统一转 `{code,message,detail}`。
+- 上游错误分类保留语义（对齐 `docs/02-arp-core.md`）：`ArpEmpty`/`UpstreamTemporary`(408/5xx,重试)/`ContentRejected`(451,不重试不罚号)/`AuthFailed`(401/403)/`QuotaExhausted`。
+- 禁止吞异常（空 `except`）；日志用结构化 logger，禁止把 token/cookie/代理密码写进日志。
+
+## 鉴权
+- 面板用户/管理员：JWT（HS256, `APP_SECRET_KEY`），中间件解析 `sub`/`role`；管理员路由用 `require_admin` 依赖。
+- 对外 API（用户 KEY）：`Authorization: Bearer sk-...`，KEY 存哈希，校验走常量时间比较 + Redis 缓存。
+- 采集器内网口 `admin-api/*`：`ARP_INTERNAL_TOKEN` 校验 + 建议 IP 白名单，绝不暴露公网。
+
+## 计费
+- 金额/积分用 `int`（最小单位），禁 float。扣费在生成成功回调里，单事务 `SELECT ... FOR UPDATE` 或 Redis 原子操作。
+- 每笔生成写 `consume_record`，每笔充值写 `recharge_record`，与余额变动同事务。
