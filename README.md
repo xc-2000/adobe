@@ -29,6 +29,9 @@
    └─ 200 → 轮询 href → 直连 CDN 下载
 ```
 
+当前进度：已用 CloakBrowser PRO Chrome 148 + 住宅 sticky 代理完成真实
+`harvester → ARP 池 → Cookie/clio token → curl_cffi → 轮询 → CDN 直连下载` 闭环。
+
 ## 目录结构
 
 ```

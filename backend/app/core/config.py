@@ -26,6 +26,8 @@ class Settings(BaseSettings):
     arp_ttl_seconds: int = Field(default=120, ge=30, le=240)
     arp_max_uses: int = Field(default=20, ge=1, le=100)
     arp_key_prefix: str = "firefly:arp"
+    submit_impersonate: str = "chrome146"
+    poll_timeout_seconds: int = Field(default=120, ge=30, le=600)
 
     test_cookie_file: str | None = None
     log_level: str = "INFO"

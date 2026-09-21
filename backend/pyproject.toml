@@ -9,6 +9,7 @@ description = "Multi-tenant image and video generation relay"
 requires-python = ">=3.11,<3.13"
 dependencies = [
   "asyncpg>=0.29,<1",
+  "curl-cffi>=0.15,<1",
   "fastapi>=0.115,<1",
   "orjson>=3.10,<4",
   "pydantic-settings>=2.6,<3",

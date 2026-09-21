@@ -9,10 +9,12 @@
 - [x] 测试 Cookie 安全加载与脱敏验证（4 条，均含 `ims_sid`）。
 
 ## 阶段 1 · 出图链路打通（最高优先）
-- [ ] `harvester`：148 指纹 + 住宅 sticky 铸 `sid/ark/bfp/ftr`，抓 UA/CH，POST 入池。
+- [x] `harvester`：CloakBrowser PRO 148 + 住宅 sticky 铸 `sid/ark/bfp/ftr`，抓 UA/CH，POST 入池。
 - [x] `arp` 池（Redis）：四项/Chrome 148 校验，原子 publish / checkout / invalidate / health，内网鉴权。
-- [ ] 安全读取本机测试 Cookie（4 行）→ clio token；Cookie/token 加密且全链路日志脱敏。
-- [ ] `adobe`：curl_cffi（最新可用 TLS profile + Chrome 148 UA/CH）提交、轮询、CDN 直连下载；绑出口与身份。
+- [x] 安全读取本机测试 Cookie（4 行）→ clio token；全链路日志脱敏。
+- [x] `gpt-image-2` 首次真实闭环：curl_cffi + Chrome 148 UA/CH、同出口提交/轮询、CDN 直连下载。
+- [ ] Cookie/token 入库加密与账号池 token 缓存。
+- [ ] 通用 `adobe` 客户端：重试/账号调度/MinIO 内容寻址缓存。
 - [ ] `payloads`：gpt-image / veo / luma / sora / seedance / image5 / firefly-video 请求体。
 - [ ] 验收：付费 HARD 号 → 200 出图；换 SID → 408；内容拒绝 451 不罚号。
 
