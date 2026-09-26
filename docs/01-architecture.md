@@ -19,7 +19,7 @@
                                  │ enqueue                    │ push ARP
                         ┌────────▼─────────┐         ┌────────┴───────────┐
                         │ 生成 Worker (Celery)│         │ 采集器 harvester    │
-                        │  curl_cffi 提交    │         │ CloakBrowser 148   │
+                        │  curl_cffi 提交    │         │ fp-chromium 148    │
                         │  ├ checkout 账号   │         │ 住宅 sticky 出口    │
                         │  ├ checkout ARP    │         │ SherlockSdk 铸票   │
                         │  ├ 提交/轮询/下载  │         └────────────────────┘
@@ -31,12 +31,12 @@
 ## 数据流（一次出图）
 1. 用户在创作中心提交 prompt / 模型 / 尺寸 → 后端校验余额、幂等键 → 写 `generation_job(queued)` → 入队。
 2. Worker 取 job → `checkout` 一个空闲 HARD 账号（Redis 租约）→ `checkout` 一枚未过期 ARP bundle。
-3. 如需 clio token：用账号 Cookie 换 `clio-playground-web` access_token（缓存至过期）。
+3. 每次出图用账号 Cookie 现换 `clio-playground-web` access_token（**不入库**，用完即弃）。
 4. curl_cffi：用 `bundle.proxy_url` + `bundle.ua/ch` 提交 `generate-async`，带 `x-arp-session-id=bundle.token`。
 5. 结果分支：
    - `200` → 轮询 `links.result.href`（同 sticky）→ 取 `presignedUrl` → **直连 CDN** 下载 → 存对象存储。
    - `408`/"system under load" → invalidate 该 ARP，park 账号换下一个，换新票重试（≤2-3 次），骑好窗口。
-   - `401` → 刷账号 token（ARP 保留）；`403` → 身份不一致排查；`451` → 内容拒绝（不罚号、直接回用户）。
+   - `401` → Cookie 现换 AT 重试（ARP 保留）；连续鉴权失败标 `dead`；`403` → 身份不一致排查；`429`/`451` → 不罚号、退避重试。
 6. 成功：扣费（同事务写 `consume_record` + 余额）、更新 `generation_job(succeeded)`、落 `request_log`（脱敏）、回调/推送前端。
 
 ## 部署拓扑（建议）

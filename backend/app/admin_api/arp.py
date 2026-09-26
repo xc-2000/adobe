@@ -1,39 +1,13 @@
-import hmac
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Header, Request
+from fastapi import APIRouter, Depends, Request
 
+from app.admin_api.auth import require_internal_token
+from app.admin_api.store import arp_store_for, arp_store_from, pulse_harvester
+from app.api.deps import get_config_store
 from app.arp.models import ArpInvalidateRequest, ArpPublishRequest
-from app.arp.store import ArpStore
-from app.core.config import Settings
-from app.core.errors import AppError
-from app.core.resources import Resources
 
 router = APIRouter(prefix="/admin-api/adobe/arp", tags=["internal-arp"])
-
-
-def _store(request: Request) -> ArpStore:
-    settings: Settings = request.app.state.settings
-    resources: Resources = request.app.state.resources
-    return ArpStore(
-        resources.redis,
-        key_prefix=settings.arp_key_prefix,
-        ttl_seconds=settings.arp_ttl_seconds,
-        max_uses=settings.arp_max_uses,
-    )
-
-
-async def require_internal_token(
-    request: Request,
-    token: Annotated[str | None, Header(alias="X-Internal-Token")] = None,
-) -> None:
-    settings: Settings = request.app.state.settings
-    if token is None or not hmac.compare_digest(token, settings.arp_internal_token):
-        raise AppError(
-            code="internal_auth_failed",
-            message="invalid internal credentials",
-            http_status=401,
-        )
 
 
 @router.post("")
@@ -42,7 +16,7 @@ async def publish(
     request: Request,
     _auth: Annotated[None, Depends(require_internal_token)],
 ) -> dict[str, object]:
-    ids = await _store(request).publish(payload.tokens)
+    ids = await (await arp_store_for(request)).publish(payload.tokens)
     return {"ok": True, "published": len(ids), "ids": ids}
 
 
@@ -51,7 +25,10 @@ async def health(
     request: Request,
     _auth: Annotated[None, Depends(require_internal_token)],
 ) -> dict[str, object]:
-    result = await _store(request).health()
+    cfg = await get_config_store(request).load()
+    store = arp_store_from(request, cfg)
+    await pulse_harvester(store, cfg.mint_interval_seconds)
+    result = await store.health()
     return {"ok": True, **result}
 
 
@@ -61,5 +38,5 @@ async def invalidate(
     request: Request,
     _auth: Annotated[None, Depends(require_internal_token)],
 ) -> dict[str, object]:
-    removed = await _store(request).invalidate(payload.id)
+    removed = await (await arp_store_for(request)).invalidate(payload.id)
     return {"ok": True, "removed": removed}

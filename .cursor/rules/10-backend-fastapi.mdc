@@ -19,7 +19,7 @@ alwaysApply: false
 
 ## 错误处理
 - 领域异常继承 `AppError(code, http_status, message)`，全局 handler 统一转 `{code,message,detail}`。
-- 上游错误分类保留语义（对齐 `docs/02-arp-core.md`）：`ArpEmpty`/`UpstreamTemporary`(408/5xx,重试)/`ContentRejected`(451,不重试不罚号)/`AuthFailed`(401/403)/`QuotaExhausted`。
+- 上游错误分类保留语义（对齐 `docs/02-arp-core.md`）：`ArpEmpty`/`UpstreamTemporary`(408/5xx,重试)/`ContentRejected`(451,重试不罚号)/`AuthFailed`(401/403)/`QuotaExhausted`。
 - 禁止吞异常（空 `except`）；日志用结构化 logger，禁止把 token/cookie/代理密码写进日志。
 
 ## 鉴权
@@ -27,6 +27,10 @@ alwaysApply: false
 - 对外 API（用户 KEY）：`Authorization: Bearer sk-...`，KEY 存哈希，校验走常量时间比较 + Redis 缓存。
 - 采集器内网口 `admin-api/*`：`ARP_INTERNAL_TOKEN` 校验 + 建议 IP 白名单，绝不暴露公网。
 
-## 计费
-- 金额/积分用 `int`（最小单位），禁 float。扣费在生成成功回调里，单事务 `SELECT ... FOR UPDATE` 或 Redis 原子操作。
-- 每笔生成写 `consume_record`，每笔充值写 `recharge_record`，与余额变动同事务。
+## 计费（资金链路，最高严格度）
+- 金额/积分用 `int`（最小单位），禁 float。价格**只**来自 `services/config/pricing`（系统配置计费表）；模型无定价 → 422 拒绝，禁止默认 0 元。
+- 三段式：`billing.hold()` 提交时原子预扣（`UPDATE users SET balance=balance-:c WHERE id=:u AND balance>=:c AND status='active'`，影响 0 行 → 402 `insufficient_balance`，任务不落库）；`billing.settle()` 成功确认；`billing.refund()` 失败/拒绝退回。
+- 幂等：ledger 以 `(job_id, type)` 唯一约束保证 hold/refund 各只发生一次；客户端 `idempotency_key` 在 `(user_id, idempotency_key)` 唯一，重复提交返回原任务、不重复预扣。
+- 每笔预扣同事务写 `consume_record(status=pending)`，成功 `settled`、退回 `refunded`；每笔充值/调账写 `recharge_record` + ledger，同事务。
+- `users.balance` 是缓存视图；`balance_ledger` 为对账真源。任何直接改 `balance` 而不经 `services/billing` 的代码视为 bug。
+- 唯一入口：面板 / OpenAI / Gemini 路由都调 `services/generation/gate.submit_job()`，路由层禁止自行计价、自行扣费、自行建任务。

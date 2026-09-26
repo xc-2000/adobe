@@ -57,7 +57,7 @@
 - Cookie → clio token，校验 HARD/账号 ID/scope，安全缓存。
 - curl_cffi：最新可用 TLS profile + bundle 的 Chrome 148 UA/CH。
 - 提交、轮询、CDN 直连流式下载、MinIO 转存。
-- 错误分类：401/403/408/429/451/5xx；408 换票/换号，451 不罚号。
+- 错误分类：401/403/408/429/451/5xx；408 换票/换号，429/451 不罚号并重试。
 - 结构化请求日志与 trace_id，全程脱敏。
 
 ### 闸门 G2（最关键）

@@ -1,8 +1,12 @@
 # 07 · 本地开发与部署
 
+运营参数（代理、TTL、铸票间隔、计费）在**系统配置面板**，不在 `.env`。见 [12-minting-and-config](./12-minting-and-config.md)。
+
+**技术支持 QQ 群：19302577**
+
 ## 依赖
 - Python 3.11+、Node 18+（pnpm）、PostgreSQL 15+、Redis 7+。
-- 采集器另需 CloakBrowser PRO / fingerprint-chromium（148）与住宅 sticky 代理。
+- 采集器另需 [fingerprint-chromium](https://github.com/adryfish/fingerprint-chromium) 148（`vendor/fingerprint-chromium/chrome.exe`）与住宅 sticky 代理。
 
 ## 环境变量
 ```bash
@@ -12,7 +16,7 @@ cp .env.example .env
 
 本机真实链路测试可设置：
 ```text
-TEST_COOKIE_FILE=C:\Users\Administrator\Desktop\cookies_export (2) (1).txt
+TEST_COOKIE_FILE=/path/to/cookies.txt
 ```
 该文件仅运行时读取，不复制进仓库/镜像，不输出内容；测试账号入库前必须加密。
 
@@ -42,12 +46,13 @@ pnpm build      # 产物 dist/
 ## 采集器（独立进程 / 独立机器）
 ```bash
 cd harvester
-pip install -r requirements.txt
-python -m playwright install chromium   # 或指向 CloakBrowser/fingerprint-chromium
-# 关键 env：HARVESTER_TARGET, ARP_INTERNAL_TOKEN, ARP_PROXIES(住宅sticky), ADOBE_CHROME_BINARY, ARP_INTERVAL=75
-python harvester.py
+python -m venv .venv && . .venv/Scripts/Activate.ps1
+pip install -e ".[dev]"
+# 关键 env：HARVESTER_TARGET, ARP_INTERNAL_TOKEN
+# 浏览器数 / 间隔 / TTL / 水位全部读面板配置中心，不读 ARP_INTERVAL
+python -m arp_harvester.main
 ```
-验证：采集器日志每周期 `published N ARP`；`GET /admin-api/adobe/arp` 返回 `present:true, ready>0, oldest_age_sec` 小。
+验证：采集器日志每周期 `published arp id=…`；`GET /admin-api/adobe/arp` 返回 `present:true, ready>0`。面板「系统配置 → 上游调度」看门狗应显示在线。进程必须常驻（systemd / nssm）；挂掉则全站无法出图。
 
 ## 冒烟校验（对齐 [02 §10](./02-arp-core.md)）
 1. 铸出可解码 `sid+ark+bfp+ftr`。

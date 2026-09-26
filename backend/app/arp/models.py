@@ -10,6 +10,12 @@ from uuid import uuid4
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, field_validator, model_validator
 
 REQUIRED_ARP_PARTS = frozenset({"sid", "ark", "bfp", "ftr"})
+ARP_MAX_USES_CAP = 10
+
+
+def cap_arp_max_uses(value: int) -> int:
+    """Hard ceiling for a single ticket. Config may be lower (ge=1)."""
+    return max(1, min(int(value), ARP_MAX_USES_CAP))
 
 
 def decode_arp_token(token: str) -> dict[str, Any]:
@@ -25,6 +31,8 @@ def decode_arp_token(token: str) -> dict[str, Any]:
         raise ValueError(f"ARP token is missing required parts: {','.join(sorted(missing))}")
     if any(not isinstance(payload[name], str) or not payload[name] for name in REQUIRED_ARP_PARTS):
         raise ValueError("ARP token parts must be non-empty strings")
+    if "v2_tt" not in payload["ftr"]:
+        raise ValueError("ARP token ftr must be the full forter cookie with v2_tt")
     return payload
 
 
@@ -42,6 +50,14 @@ class ArpPublishItem(BaseModel):
     @classmethod
     def validate_token(cls, value: SecretStr) -> SecretStr:
         decode_arp_token(value.get_secret_value())
+        return value
+
+    @field_validator("proxy_url")
+    @classmethod
+    def require_proxy_url(cls, value: SecretStr) -> SecretStr:
+        raw = value.get_secret_value().strip()
+        if not raw or "://" not in raw:
+            raise ValueError("ARP bundle requires proxy_url")
         return value
 
     @field_validator("ua")

@@ -8,7 +8,7 @@ from app.arp.models import ArpPublishItem, decode_arp_token
 
 
 def make_token() -> str:
-    payload = {"sid": "sid", "ark": "ark", "bfp": "bfp", "ftr": "full_forter_cookie"}
+    payload = {"sid": "sid", "ark": "ark", "bfp": "bfp", "ftr": "id_ts__UDF43-xx=-3-v2_tt"}
     return base64.b64encode(json.dumps(payload).encode()).decode()
 
 
@@ -34,7 +34,7 @@ def test_decode_arp_token_requires_all_four_parts() -> None:
     decoded = decode_arp_token(make_token())
 
     assert decoded["sid"] == "sid"
-    assert decoded["ftr"] == "full_forter_cookie"
+    assert decoded["ftr"] == "id_ts__UDF43-xx=-3-v2_tt"
 
 
 def test_publish_item_hides_secrets_in_repr() -> None:
@@ -43,6 +43,14 @@ def test_publish_item_hides_secrets_in_repr() -> None:
     rendered = repr(item)
     assert "password" not in rendered
     assert make_token() not in rendered
+
+
+def test_publish_item_requires_proxy_url() -> None:
+    data = make_item().model_dump()
+    data["proxy_url"] = "   "
+
+    with pytest.raises(ValidationError, match="proxy_url"):
+        ArpPublishItem.model_validate(data)
 
 
 def test_publish_item_requires_chrome_148() -> None:
@@ -57,4 +65,13 @@ def test_decode_arp_token_rejects_missing_part() -> None:
     token = base64.b64encode(json.dumps({"sid": "sid"}).encode()).decode()
 
     with pytest.raises(ValueError, match="missing required parts"):
+        decode_arp_token(token)
+
+
+def test_decode_arp_token_rejects_ftr_without_v2_tt() -> None:
+    token = base64.b64encode(
+        json.dumps({"sid": "sid", "ark": "ark", "bfp": "bfp", "ftr": "id_ts__UDF43-xx"}).encode()
+    ).decode()
+
+    with pytest.raises(ValueError, match="v2_tt"):
         decode_arp_token(token)

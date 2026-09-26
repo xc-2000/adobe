@@ -55,8 +55,11 @@ services:
       context: ./backend
     environment:
       APP_ENV: dev
-      APP_SECRET_KEY: ${APP_SECRET_KEY:-dev-only-change-me}
-      ARP_INTERNAL_TOKEN: ${ARP_INTERNAL_TOKEN:-dev-only-internal-token}
+      APP_SECRET_KEY: ${APP_SECRET_KEY:-dev-only-change-me-32-bytes-long!!}
+      FIELD_ENCRYPTION_KEY: ${FIELD_ENCRYPTION_KEY:-}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-change-me-admin-password}
+      ARP_INTERNAL_TOKEN: ${ARP_INTERNAL_TOKEN:-change-me-internal-token}
       DATABASE_URL: postgresql+asyncpg://firefly:${POSTGRES_PASSWORD:-firefly-dev}@postgres:5432/firefly_gen
       REDIS_URL: redis://redis:6379/0
       LOG_LEVEL: INFO
@@ -79,6 +82,18 @@ services:
       start_period: 10s
     ports:
       - "127.0.0.1:${API_PORT:-18000}:8000"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_USE_MOCK: ${VITE_USE_MOCK:-0}
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${WEB_PORT:-18080}:8080"
     restart: unless-stopped
 
 volumes:

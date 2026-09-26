@@ -23,7 +23,7 @@
 
 ## Harvester 容器化的现实约束
 
-CloakBrowser PRO / fingerprint-chromium 是特殊浏览器，不保证所有 Linux 容器都能保持与 Windows Chrome 148 相同的指纹。优先顺序：
+fingerprint-chromium 是特殊浏览器，不保证所有 Linux 容器都能保持与 Windows Chrome 148 相同的指纹。优先顺序：
 
 1. **推荐**：harvester 跑在 Windows/住宅宿主机，其他组件容器化；通过内网 HTTPS 向 admin-api 发布 ARP。
 2. 浏览器提供 Linux 构建时才做独立 harvester 镜像：安装运行库、`shm_size: 1gb`、Xvfb（有头模式）、只读挂载浏览器二进制。
@@ -34,7 +34,7 @@ CloakBrowser PRO / fingerprint-chromium 是特殊浏览器，不保证所有 Lin
 
 - 生产使用 Docker secrets / Kubernetes Secret：数据库密码、JWT key、字段加密 key、ARP internal token、代理凭据。
 - 测试 Cookie 文件只在本机调试时只读挂载：
-  `C:\Users\Administrator\Desktop\cookies_export (2) (1).txt:/run/secrets/test_cookies:ro`
+  `/path/to/cookies.txt:/run/secrets/test_cookies:ro`
 - 不通过 `COPY` 写入镜像，不放 `.env`，不输出文件内容。生产环境不挂载该测试文件。
 
 ## 网络隔离

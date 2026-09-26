@@ -4,16 +4,16 @@
 
 ## 0. 测试数据与安全边界
 
-- 测试 Cookie：`C:\Users\Administrator\Desktop\cookies_export (2) (1).txt`，已确认是 **4 行完整 Cookie Header**。
-- 该文件只作为本机测试输入，通过 `TEST_COOKIE_FILE` 或 CLI `--cookie-file` 读取；**不复制进项目、不打进镜像、不写日志、不提交 Git**。
-- 导入器逐行解析，每行作为一个账号；仅输出 `line_no / cookie_hash / 是否含 ims_sid / JWT 账号后缀脱敏`。
+- 测试 Cookie：本机导出文件，每行 `邮箱----Cookie Header` 或纯 Cookie Header（须含 `ims_sid`）。
+- 该文件只作为本机测试输入，通过 `TEST_COOKIE_FILE` 或面板导入；**不复制进项目、不打进镜像、不写日志、不提交 Git**。
+- 导入器逐行解析，每行作为一个账号；入库只加密 Cookie，**不把 CK 换成 AT 存库**；出图时现换 AT。
 - 进入数据库前用 `FIELD_ENCRYPTION_KEY` 加密；测试结束可一键删除测试账号。
 
 ## 1. 里程碑 A：最小闭环（单进程调试）
 
 ### A1. ARP 采集器
 - 从现有 `adobe-arp-harvester` 迁移核心逻辑，但改为本项目接口。
-- CloakBrowser PRO / fingerprint-chromium 148，随机 seed，住宅 sticky 代理。
+- [fingerprint-chromium](https://github.com/adryfish/fingerprint-chromium) 148，随机 seed，住宅 sticky 代理。Playwright 只驱动该二进制。
 - `SherlockSdk.initAsync()` 取得 `sid/ark/bfp/ftr`，抓 UA/高熵 CH，校验后发布完整 bundle。
 - 采集器仅调用 HTTP admin-api，不连接 PostgreSQL/Redis。
 
@@ -29,7 +29,7 @@
 
 ### A4. curl_cffi 提交
 - 身份目标统一 Chrome 148；默认 TLS profile 用 curl_cffi 当前可用的 `chrome146`，UA/CH 严格覆盖为 bundle 的 148 身份。
-- 若 CloakBrowser PRO 可导出 148 JA3/Akamai，再启用自定义 TLS；未验证前不伪造标签。
+- 若能导出准确的 Chrome 148 JA3/Akamai，再启用自定义 TLS；未验证前不伪造标签。
 - 提交绑定 `bundle.proxy_url`，按模型构造 payload，处理 200/401/403/408/429/451/5xx。
 - 200 后轮询，产物 CDN 直连流式下载；408 立即 invalidate 当前 ARP 并换票，最多 2–3 次。
 
@@ -38,7 +38,7 @@
 2. Cookie 换出合格 clio token，日志无敏感信息。
 3. HARD 账号出图 200；结果文件可打开，记录提交/轮询/下载耗时。
 4. 故意换出口或 UA 能稳定复现 408/403，证明绑定校验有效。
-5. 451 不换号、不扣费；408 换票重试；401 刷 token。
+5. 451 / 429 不罚号、退避重试，失败退费；408 换票重试；401 用 Cookie 现换 AT。
 
 ## 2. 里程碑 B：任务化与协议适配
 

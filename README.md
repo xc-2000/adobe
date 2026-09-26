@@ -1,8 +1,18 @@
 # firefly-gen · 生图 / 生视频 多用户中转平台
 
-企业级 SaaS 后台风格（左右布局、蓝色科技感）的 AIGC 中转平台。用户在统一面板登录、在创作中心提交生图 / 图片编辑 / 生视频请求，平台通过一套自建的 **ARP 池 + 指纹自洽提交** 链路调度上游 Adobe Firefly（gpt-image / veo / luma / sora / seedance / firefly-image-5 / firefly-video 等模型），并做多用户计费、Key 管理与高并发调度。对外提供 OpenAI 与 Gemini 官方格式的同步/异步接口。
+企业级 SaaS 后台风格（左右布局、蓝色科技感）的 AIGC 中转平台。用户在统一面板登录、在创作中心提交文生图 / 图生图 / 文生视频 / 图生视频，平台通过一套自建的 **ARP 池 + 指纹自洽提交** 链路调度上游 Adobe Firefly（正式 11 个模型：Nano Banana / GPT Image 2·2.5 / Gemini Omni Flash / Seedance 2.0 / Veo 3.1，见 [`docs/13-models.md`](./docs/13-models.md)），并做多用户计费、Key 管理与高并发调度。对外提供 OpenAI 与 Gemini 官方格式的同步/异步接口。
+
+## 技术支持
+
+**QQ 群：19302577**（必加。接入、部署、出图问题都在群里）
 
 > 面向开发者的完整设计规则与文档见 [`docs/`](./docs)，AI 协作规则见 [`.cursor/rules/`](./.cursor/rules)。
+
+## 界面预览
+
+| 登录 | 创作中心 | 管理后台 |
+|---|---|---|
+| ![登录](docs/screenshots/login.png) | ![创作中心](docs/screenshots/create.png) | ![系统总览](docs/screenshots/dashboard.png) |
 
 ## 技术栈
 
@@ -10,7 +20,7 @@
 |---|---|
 | 后端 | Python 3.11 · FastAPI · SQLAlchemy 2.0 (async) · PostgreSQL · Redis · Celery |
 | 出图链路 | curl_cffi（TLS 指纹模拟提交）+ 自建 ARP 池 |
-| 采集器 | CloakBrowser PRO / fingerprint-chromium（148 指纹，住宅出口）+ Playwright |
+| 采集器 | [fingerprint-chromium](https://github.com/adryfish/fingerprint-chromium) 148 + Playwright 驱动（住宅出口） |
 | 前端 | React 18 · TypeScript · Ant Design (Pro Layout) · Vite |
 
 ## 系统全景（一句话）
@@ -18,7 +28,7 @@
 出图成功 = 一个**住宅出口、指纹自洽、持续重铸**的 ARP 工厂，喂给一池**付费(HARD)账号**，提交时**绑铸币出口 + 对齐铸币身份**，并在**时间成簇的 408 上跨池重试骑好窗口**。缺任何一条就是 408/403。详见 [`docs/02-arp-core.md`](./docs/02-arp-core.md)。
 
 ```
-[采集器 CloakBrowser PRO / fp-chromium 148 · 住宅出口]
+[采集器 fingerprint-chromium 148 · 住宅出口]
    └─ SherlockSdk.initAsync() 铸 {sid,ark,bfp,ftr} + 抓 UA/Client-Hints
        └─ POST /admin-api/adobe/arp  →  ARP 池 (Redis, 带 egress + 身份 + TTL)
                                               │ checkout
@@ -29,7 +39,7 @@
    └─ 200 → 轮询 href → 直连 CDN 下载
 ```
 
-当前进度：已用 CloakBrowser PRO Chrome 148 + 住宅 sticky 代理完成真实
+当前进度：已用 fingerprint-chromium Chrome 148 + 住宅 sticky 代理完成真实
 `harvester → ARP 池 → Cookie/clio token → curl_cffi → 轮询 → CDN 直连下载` 闭环。
 
 ## 目录结构

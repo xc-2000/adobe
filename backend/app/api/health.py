@@ -21,9 +21,7 @@ async def check_redis(resources: Resources) -> None:
     await resources.redis.ping()
 
 
-async def _bounded_check(
-    check: HealthCheck, resources: Resources, timeout_seconds: float
-) -> bool:
+async def _bounded_check(check: HealthCheck, resources: Resources, timeout_seconds: float) -> bool:
     try:
         async with asyncio.timeout(timeout_seconds):
             await check(resources)

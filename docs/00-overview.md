@@ -3,6 +3,8 @@
 ## 是什么
 firefly-gen 是一个**生图 / 生视频多用户中转平台**：用户在统一 SaaS 面板登录，在创作中心提交文生图 / 图生图 / 文生视频 / 图生视频请求，平台调度上游 Adobe Firefly（多模型）完成生成并计费。管理员在后台做数据统计、用户管理、计费、系统配置与请求审计。
 
+**技术支持 QQ 群：19302577**
+
 ## 谁用
 - **终端用户**：网页面板操作，或用平台签发的 API KEY（`sk-...`）调用 OpenAI 兼容风格接口。
 - **管理员**：后台运营（用户、计费、配置、日志、监控）。
@@ -32,4 +34,5 @@ firefly-gen 是一个**生图 / 生视频多用户中转平台**：用户在统�
 | [08-roadmap](./08-roadmap.md) | 里程碑与阶段 |
 | [09-implementation-plan](./09-implementation-plan.md) | harvester → ARP 池 → 提交的开发与验收方案 |
 | [10-container-deployment](./10-container-deployment.md) | Compose/生产容器拓扑、隔离、伸缩与回滚 |
-| [11-execution-plan](./11-execution-plan.md) | 最优开发顺序、Sprint、验收闸门与首次提交拆分 |
+| [12-minting-and-config](./12-minting-and-config.md) | **铸票 + 系统设置运行时备忘（后续功能真源）** |
+| [13-models](./13-models.md) | **模型目录与上游请求参数（8 个正式模型；尺寸/头/408）** |

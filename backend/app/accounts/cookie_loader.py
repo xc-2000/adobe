@@ -17,10 +17,15 @@ class CookieRecord:
     fingerprint: str
     names: frozenset[str]
     _value: str = field(repr=False)
+    _identity: str | None = field(default=None, repr=False)
 
     @property
     def value(self) -> str:
         return self._value
+
+    @property
+    def identity(self) -> str | None:
+        return self._identity
 
     @property
     def has_ims_sid(self) -> bool:
@@ -32,11 +37,27 @@ class CookieRecord:
             "fingerprint": self.fingerprint,
             "cookie_count": len(self.names),
             "has_ims_sid": self.has_ims_sid,
+            "has_identity": bool(self._identity),
         }
 
 
+def _split_optional_identity(raw: str) -> tuple[str | None, str]:
+    """`email----name=value; …` or a bare Cookie header. Both are valid."""
+    marker = "----"
+    if marker not in raw:
+        return None, raw.strip()
+    identity, _, rest = raw.partition(marker)
+    identity = identity.strip()
+    cookie = rest.strip()
+    if not cookie or "=" not in cookie:
+        return None, raw.strip()
+    if not identity or "=" in identity or ";" in identity:
+        return None, raw.strip()
+    return identity, cookie
+
+
 def _parse_cookie_line(raw: str, line_number: int) -> CookieRecord:
-    value = raw.strip()
+    identity, value = _split_optional_identity(raw.strip())
     if not value:
         raise CookieFileError(f"line {line_number}: empty cookie")
 
@@ -46,6 +67,8 @@ def _parse_cookie_line(raw: str, line_number: int) -> CookieRecord:
         if not separator or not name or not cookie_value:
             raise CookieFileError(f"line {line_number}: invalid Cookie header")
         names.add(name)
+    if "ims_sid" not in names:
+        raise CookieFileError(f"line {line_number}: missing ims_sid")
 
     digest = hashlib.sha256(value.encode("utf-8")).hexdigest()[:16]
     return CookieRecord(
@@ -53,7 +76,18 @@ def _parse_cookie_line(raw: str, line_number: int) -> CookieRecord:
         fingerprint=f"sha256:{digest}",
         names=frozenset(names),
         _value=value,
+        _identity=identity,
     )
+
+
+def parse_cookie_text(text: str) -> list[CookieRecord]:
+    records: list[CookieRecord] = []
+    for line_number, raw in enumerate(text.splitlines(), start=1):
+        if raw.strip():
+            records.append(_parse_cookie_line(raw, line_number))
+    if not records:
+        raise CookieFileError("cookie text contains no records")
+    return records
 
 
 def load_cookie_file(path: str | Path) -> list[CookieRecord]:
@@ -61,15 +95,8 @@ def load_cookie_file(path: str | Path) -> list[CookieRecord]:
     if not cookie_path.is_file():
         raise CookieFileError(f"cookie file not found: {cookie_path}")
 
-    records: list[CookieRecord] = []
     with cookie_path.open(encoding="utf-8-sig") as handle:
-        for line_number, raw in enumerate(handle, start=1):
-            if raw.strip():
-                records.append(_parse_cookie_line(raw, line_number))
-
-    if not records:
-        raise CookieFileError("cookie file contains no records")
-    return records
+        return parse_cookie_text(handle.read())
 
 
 def main() -> None:

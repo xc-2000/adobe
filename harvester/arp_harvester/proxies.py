@@ -4,7 +4,7 @@ import hashlib
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from urllib.parse import quote
+from urllib.parse import quote, unquote
 
 _SID_PATTERN = re.compile(r"(?:^|-)sid-([A-Za-z0-9]+)(?:-|$)")
 
@@ -86,3 +86,14 @@ def load_proxy_file(path: Path, *, default_scheme: str) -> list[ProxyRecord]:
     if not proxies:
         raise ProxyFileError("proxy file contains no proxies")
     return proxies
+
+
+def playwright_proxy(value: str) -> dict[str, str]:
+    """SOCKS only. HTTP sticky auth goes through AuthProxyRelay, not this dict."""
+    record = parse_proxy(value, default_scheme="http")
+    scheme = "socks5" if record.scheme in {"socks5", "socks5h"} else record.scheme
+    return {
+        "server": f"{scheme}://{record.host}:{record.port}",
+        "username": unquote(record.username),
+        "password": unquote(record.password),
+    }

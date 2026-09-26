@@ -16,6 +16,7 @@ venv/
 node_modules/
 frontend/dist/
 frontend/.vite/
+*.tsbuildinfo
 *.local
 
 # ---- Data / secrets (NEVER commit) ----

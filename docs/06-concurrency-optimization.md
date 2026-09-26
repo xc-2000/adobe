@@ -5,13 +5,13 @@
 ## 1. 分层限流（从外到内）
 1. **入口**：Nginx/反代 连接数 + 面板/`/v1` 按用户与 KEY 令牌桶（Redis）。
 2. **队列**：生成请求全部先持久化并入队；同步接口只是等待同一任务的 Redis 终态事件，不在 API 进程执行生成。
-3. **worker 并发**：`GEN_WORKER_CONCURRENCY` 与账号池容量取小；worker 内单账号并发=1（提交串行、轮询可并行）。
-4. **上游**：单账号限速用 `parked_until` 退避；429 只影响该号。
+3. **worker 并发**：`worker_concurrency`（配置中心，默认 32，最高 200）与账号池容量取小；单号并发看 `account_concurrency_normal`。
+4. **上游**：408 用 `parked_until` 退避；429 / 451 不 park 账号，任务退避重试。
 - `image`、`video`、`media` 分队列与 worker，防止分钟级视频任务阻塞图片；队列设最大深度，超限返回 429/503 + `Retry-After`。
 
 ## 2. 资源池化与调度
-- **账号池**：Redis 租约锁 `SET account:{id}:lease NX PX <ttl>`；只挑 `status=active & plan=HARD`；408 → `parked`+冷却，跨号重试骑好窗口；401 刷 token；连续失败标 `dead`。
-- **ARP 池**：Redis zset 按 `expires_at` 排序，`checkout` 弹最新鲜的；`uses<max_uses` 可多号复用；408/身份失败 `invalidate`；`ready<ARP_MIN_READY` 触发采集器提速/告警并让出图排队。
+- **账号池**：Redis 租约锁 `SET account:{id}:lease NX PX <ttl>`；只挑 `status=active & plan=HARD`；408 → `parked`+冷却，跨号重试骑好窗口；每次请求用 Cookie 现换 AT，不入库；Cookie 失效标 `dead`。
+- **ARP 池**：常备 4–20 枚未过期票。`checkout` **round-robin** 把并发摊到多枚上（禁止总拿最新那张）；账号无关、请求无关，寿命内可复用。`uses<max_uses` 才留在 ready；408/身份失败 `invalidate` 后下次重试换票。`ready < arp_min_ready` 采集器跳过空闲加速铸；`ready >= arp_pool_target` 停铸。20 并发靠池里几枚新鲜票 + 住宅出口，不靠 20 个浏览器。
 - **egress 评分**：按 egress 累积成功/失败（`egress_scores`），优先调度高分出口；单样本不下结论。
 
 ## 3. 数据一致性与幂等

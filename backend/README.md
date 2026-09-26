@@ -1,5 +1,7 @@
 # backend
 
+**技术支持 QQ 群：19302577**
+
 FastAPI 后端。当前 Sprint 0 已提供：
 
 - `app.main:create_app` 应用工厂。
