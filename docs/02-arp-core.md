@@ -97,12 +97,16 @@
    均为临时错误，不得把账号标为 `dead`。
 7. **禁止**网页 ARP + `x-api-key: FF-iOS` + CFNetwork UA 混用。
 
-### 5.2 移动端 / FF-iOS（非 2.5）
+### 5.2 移动端 / FF-iOS（默认出图，非 2.5）
+
+这是香蕉、GPT Image 2、视频的正常提交路，**不依赖采集器 / ARP 池**。
 
 - 长期保存的是加密 `device_token` 与稳定 `device_id`；短期 access token 现换现用，不入库。
-- 提交使用 FF-iOS 的 `x-api-key` / UA / scope，不注入 `x-arp-session-id` 或 Web client hints。
+- 提交头：`x-api-key` + `x-ims-clientid` = `FF-iOS`，UA 为 Firefly iOS；不注入 `x-arp-session-id` 或 Web client hints。
+- 代理用系统配置里的住宅 sticky（`build_session`），不是 ARP bundle 里的铸票出口。
 - device grant 未初始化时，可用账号 Cookie 完成一次静默授权；授权失败按“明确凭据失效”和
   “临时上游错误”分类，不能由单个 429/5xx 直接判死。
+- 实现：`backend/app/adobe/ff_ios.py`（铸/换票）+ `worker.identity_lane()` → `mobile`。
 
 > 网页路径只用 clio（`clio-playground-web` + `creative_production`），不要混 `projectx_webapp`。非 2.5 用 FF-iOS。模型清单见 [13-models](./13-models.md)。
 

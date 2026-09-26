@@ -4,7 +4,7 @@
 
 **技术支持 QQ 群：19302577**
 
-原理与不变量见 [`../docs/02-arp-core.md`](../docs/02-arp-core.md)、[`../docs/12-minting-and-config.md`](../docs/12-minting-and-config.md) 与 [`../.cursor/rules/30-arp-core.mdc`](../.cursor/rules/30-arp-core.mdc)。运行见 [`../docs/07-dev-setup.md`](../docs/07-dev-setup.md)。
+原理与不变量见 [`../docs/02-arp-core.md`](../docs/02-arp-core.md)、[`../docs/12-minting-and-config.md`](../docs/12-minting-and-config.md)。运行见 [`../docs/07-dev-setup.md`](../docs/07-dev-setup.md)。采集器只服务 **GPT Image 2.5** 网页票；香蕉 / Image 2 / 视频走 FF-iOS，不经过本进程。
 
 采集器**不自己拼代理串**。每次铸票向面板租一枚新 sticky SID（`POST /admin-api/adobe/harvester/lease`），把返回的 `proxy_url` 原样交给本机 HTTP 中继（Chrome 只连 `127.0.0.1`），再原样写入 ARP bundle。入池前浏览器出口 IP 必须与 lease URL 探到的 IP 一致。铸票规则（浏览器数、间隔、TTL、水位、代理模板）全部读配置中心。进程内有看门狗：按 `mint_browser_count` 热加载 worker、CONNECT 失败全员暂停、崩溃自动拉起、铸票硬超时、浏览器 `close()` 卡住则杀掉进程树，避免僵尸 Chrome 把机器打满。
 

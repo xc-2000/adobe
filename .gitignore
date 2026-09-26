@@ -42,3 +42,4 @@ vendor/fingerprint-chromium/
 Thumbs.db
 .idea/
 .vscode/
+.cursor/

@@ -30,13 +30,15 @@
 
 ## 数据流（一次出图）
 1. 用户在创作中心提交 prompt / 模型 / 尺寸 → 后端校验余额、幂等键 → 写 `generation_job(queued)` → 入队。
-2. Worker 取 job → `checkout` 一个空闲 HARD 账号（Redis 租约）→ `checkout` 一枚未过期 ARP bundle。
-3. 每次出图用账号 Cookie 现换 `clio-playground-web` access_token（**不入库**，用完即弃）。
-4. curl_cffi：用 `bundle.proxy_url` + `bundle.ua/ch` 提交 `generate-async`，带 `x-arp-session-id=bundle.token`。
+2. Worker 取 job → `checkout` 一个空闲 HARD 账号（Redis 租约）。
+3. **按模型选身份**（`identity_lane`）：
+   - **默认 FF-iOS**（香蕉 / Image 2 / 视频）：现换移动端 AT，住宅代理提交，**不** checkout ARP。
+   - **仅 2.5**：Cookie 现换网页 clio AT + checkout ARP bundle，提交出口和 UA/CH 必须与铸票一致。
+4. curl_cffi 打 `generate-async`，轮询后直连 CDN 下载。
 5. 结果分支：
-   - `200` → 轮询 `links.result.href`（同 sticky）→ 取 `presignedUrl` → **直连 CDN** 下载 → 存对象存储。
-   - `408`/"system under load" → invalidate 该 ARP，park 账号换下一个，换新票重试（≤2-3 次），骑好窗口。
-   - `401` → Cookie 现换 AT 重试（ARP 保留）；连续鉴权失败标 `dead`；`403` → 身份不一致排查；`429`/`451` → 不罚号、退避重试。
+   - `200` → 取 `presignedUrl` → **直连 CDN** 下载 → 存对象存储。
+   - 网页 2.5 的 `408` → invalidate 该 ARP，换票/换号重试。
+   - `401` → 现换 AT 重试；连续鉴权失败标 `dead`；`429`/`451` → 不罚号、退避重试。
 6. 成功：扣费（同事务写 `consume_record` + 余额）、更新 `generation_job(succeeded)`、落 `request_log`（脱敏）、回调/推送前端。
 
 ## 部署拓扑（建议）

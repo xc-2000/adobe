@@ -144,8 +144,33 @@ Adobe 提交体只要 storage 上传后的 blob id，**不会替我们拉 URL，
 
 身份路径按**模型**分流，账号不分 Normal / Alpha：
 
-- `gpt-image-2.5-flare` / `gpt-image-2.5-sunburst`：网页 clio + Web ARP（FF-iOS 没有 2.5）。
-- 其它正式模型：FF-iOS 移动端，无 ARP。任意 HARD 号都可以领。
+- **默认（正常出图）**：`nano-banana` / `nano-banana-pro` / `gpt-image-2` / 全部视频 → **FF-iOS 移动端**，无 ARP。
+- **例外**：`gpt-image-2.5-flare` / `gpt-image-2.5-sunburst` → 网页 clio + Web ARP（FF-iOS 没有 2.5）。
+
+任意 HARD 号都可以领两条路。
+
+### 3.1 默认：FF-iOS 出图
+
+1. 号池里已有加密 `device_token` / `device_id`；没有则用 Cookie 静默授权一次（`app/adobe/ff_ios.py`）。
+2. 每次任务用住宅 sticky **现换** FF-iOS access_token，**不入库**。JWT `client_id` 必须是 `FF-iOS`。
+3. `curl_cffi` 走当前任务的住宅代理；**不** checkout ARP，**不**带 `x-arp-session-id` / Chrome Client-Hints。
+4. 提交 `POST .../v2/3p-images/generate-async`（视频走 `.../v2/3p-videos/generate-async`），轮询后下图直连 CDN。
+
+提交 / 轮询头：
+
+| Header | 值 |
+|---|---|
+| `authorization` | `Bearer <FF-iOS AT>` |
+| `x-api-key` | `FF-iOS` |
+| `x-ims-clientid` | `FF-iOS` |
+| `user-agent` | `Firefly/26.15.0 (AdobeCreativeSDK ...; iOS; ...)` |
+| `accept` | `*/*` |
+| `x-nonce` | `sha256(account_id + "-" + prompt[:256])`（仅 submit） |
+| `content-type` | `application/json`（仅 submit） |
+
+不要混网页 ARP、`clio-playground-web` 或 Chrome UA。429 / 451 不 park 账号。
+
+### 3.2 例外：2.5 网页 ARP
 
 1. 采集器 148 + 住宅 sticky 铸 ARP（`sid+ark+bfp+ftr`），`ftr` 必须是完整 forter cookie（含 `v2_tt`），否则不入池。
 2. Cookie 经**同一条 sticky** `POST /ims/check/v6/token` 换 clio AT（`client_id=clio-playground-web`，scope 含 `creative_production`）。
@@ -173,9 +198,9 @@ Adobe 提交体只要 storage 上传后的 blob id，**不会替我们拉 URL，
 
 ---
 
-## 4. 怎样才不会 408
+## 4. 怎样才不会 408（仅 2.5 网页路）
 
-408 是 Colligo 软拒（`timeout_error` / `system under load`），不是超时设短了。六条同时成立：
+FF-iOS 默认路不靠 ARP，这条六条件只约束 GPT Image 2.5。408 是 Colligo 软拒（`timeout_error` / `system under load`），不是超时设短了。六条同时成立：
 
 1. 有效 `x-arp-session-id`（四件套）
 2. 住宅 IP 铸的票

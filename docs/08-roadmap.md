@@ -3,7 +3,7 @@
 按"先打通链路、再做面板、后做优化"推进。每阶段有可验收产物。
 
 ## 阶段 0 · 骨架（本阶段产物：规则 + 文档 + 目录）
-- [x] 开发规则 `.cursor/rules/`、设计文档 `docs/`、`.env.example`、目录骨架。
+- [x] 设计文档 `docs/`、`.env.example`、目录骨架。
 - [x] FastAPI 配置/日志/错误/健康检查、pytest/ruff/mypy 基线。
 - [x] PostgreSQL + Redis + MinIO + API 开发 Compose。
 - [x] 测试 Cookie 安全加载与脱敏验证（4 条，均含 `ims_sid`）。
